@@ -8,6 +8,8 @@
 #include <Vrui/ToolManager.h>
 #include <Vrui/Application.h>
 
+#include "vtkSmartPointer.h"
+
 /* Forward declarations: */
 namespace Misc {
 class CallbackData;
@@ -18,6 +20,9 @@ class PopupMenu;
 class PopupWindow;
 class TextField;
 }
+
+class vtkExtOpenGLRenderWindow;
+class vtkRenderer;
 
 class HelloVrui:public Vrui::Application,public GLObject
 	{
@@ -62,6 +67,9 @@ class HelloVrui:public Vrui::Application,public GLObject
 	virtual void display(GLContextData& contextData) const;
 	void menuToggleSelectCallback(GLMotif::ToggleButton::ValueChangedCallbackData* cbData);
 	void centerDisplayCallback(Misc::CallbackData* cbData);
+
+        vtkSmartPointer<vtkExtOpenGLRenderWindow> renWin;
+        vtkSmartPointer<vtkRenderer> ren;
 	};
 
 #endif

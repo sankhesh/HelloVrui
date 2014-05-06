@@ -50,8 +50,17 @@
 #endif
 #include <Vrui/Application.h>
 #include <Vrui/SceneGraphSupport.h>
+#include <Vrui/VRWindow.h>
 
 #include "HelloVrui.h"
+
+// VTK includes
+#include <vtkActor.h>
+#include "vtkExtOpenGLRenderWindow.h"
+#include <vtkNew.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkRenderer.h>
+#include <vtkSphereSource.h>
 
 /*****************************************
 Methods of class HelloVrui::DataItem:
@@ -173,6 +182,9 @@ HelloVrui::HelloVrui(int& argc,char**& argv)
 
 	/* Initialize Vrui navigation transformation: */
 	centerDisplayCallback(0);
+
+        this->renWin = vtkSmartPointer<vtkExtOpenGLRenderWindow>::New();
+        this->ren = vtkSmartPointer<vtkRenderer>::New();
 	}
 
 HelloVrui::~HelloVrui(void)
@@ -186,6 +198,14 @@ void HelloVrui::initContext(GLContextData& contextData) const
 	/* Create a new context data item: */
 	DataItem* dataItem=new DataItem();
 	contextData.addDataItem(this,dataItem);
+
+        this->renWin->AddRenderer(ren.GetPointer());
+        vtkNew<vtkPolyDataMapper> mapper;
+        vtkNew<vtkActor> actor;
+        actor->SetMapper(mapper.GetPointer());
+        this->ren->AddActor(actor.GetPointer());
+        vtkNew<vtkSphereSource> ss;
+        mapper->SetInputConnection(ss->GetOutputPort());
 	}
 
 void HelloVrui::toolCreationCallback(Vrui::ToolManager::ToolCreationCallbackData* cbData)
@@ -195,7 +215,8 @@ void HelloVrui::toolCreationCallback(Vrui::ToolManager::ToolCreationCallbackData
 
 void HelloVrui::frame(void)
 	{
-
+        this->renWin->SetSize(const_cast<int*>(Vrui::getWindow(0)->getViewportSize()));
+//        std::cout << Vrui::getWindow(0)->getViewportSize()[0] << " " << Vrui::getWindow(0)->getViewportSize()[1] << std::endl;
 	}
 
 void HelloVrui::display(GLContextData& contextData) const
@@ -221,95 +242,97 @@ void HelloVrui::display(GLContextData& contextData) const
 	#endif
 
 	/* Get context data item: */
-	DataItem* dataItem=contextData.retrieveDataItem<DataItem>(this);
+//	DataItem* dataItem=contextData.retrieveDataItem<DataItem>(this);
 
 	/* Save OpenGL state: */
 	glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_LIGHTING_BIT|GL_POLYGON_BIT);
-
-	#if CLIP_SCREEN
-	/* Add a clipping plane in the screen plane: */
-	Vrui::VRScreen* screen=Vrui::getMainScreen();
-	Vrui::ONTransform screenT=screen->getScreenTransformation();
-	Vrui::Vector screenNormal=Vrui::getInverseNavigationTransformation().transform(screenT.getDirection(2));
-	Vrui::Scalar screenOffset=screenNormal*Vrui::getInverseNavigationTransformation().transform(screenT.getOrigin());
-	GLdouble cuttingPlane[4];
-	for(int i=0;i<3;++i)
-		cuttingPlane[i]=screenNormal[i];
-	cuttingPlane[3]=-screenOffset;
-	glEnable(GL_CLIP_PLANE0);
-	glClipPlane(GL_CLIP_PLANE0,cuttingPlane);
-	#endif
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	/* Render all opaque surfaces: */
-	glDisable(GL_CULL_FACE);
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
-	if(showSurface&&!surfaceTransparent)
-		{
-		/* Draw */
-		drawCube();
-		}
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
-	glEnable(GL_CULL_FACE);
-
-	/* Render transparent surfaces in back-to-front order: */
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	glDepthMask(GL_FALSE);
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
-
-	/* Render back parts of surfaces: */
-	glCullFace(GL_FRONT);
-	if(showSurface&&surfaceTransparent)
-		{
-		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
-		glMaterial(GLMaterialEnums::FRONT_AND_BACK,surfaceMaterial);
-
-		/* Draw */
-		drawCube();
-
-		/* Reset OpenGL state: */
-		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR);
-		}
-	if(showGrid)
-		{
-		glDisable(GL_LIGHTING);
-		glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-		glLineWidth(1.0f);
-
-		/* Draw */
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		drawCube();
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-
-		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_LIGHTING);
-		}
-
-	/* Render front parts of surfaces: */
-	glCullFace(GL_BACK);
-
-	if(showSurface&&surfaceTransparent)
-		{
-		/* Draw */
-		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
-		glMaterial(GLMaterialEnums::FRONT_AND_BACK,surfaceMaterial);
-
-		/* Draw */
-		drawCube();
-
-		/* Reset OpenGL state: */
-		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR);		}
-
-	/* Disable blending: */
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
-	glDepthMask(GL_TRUE);
-	glDisable(GL_BLEND);
-
-	/* Restore OpenGL state: */
-	#if CLIP_SCREEN
-	glDisable(GL_CLIP_PLANE0);
-	#endif
+//
+//	#if CLIP_SCREEN
+//	/* Add a clipping plane in the screen plane: */
+//	Vrui::VRScreen* screen=Vrui::getMainScreen();
+//	Vrui::ONTransform screenT=screen->getScreenTransformation();
+//	Vrui::Vector screenNormal=Vrui::getInverseNavigationTransformation().transform(screenT.getDirection(2));
+//	Vrui::Scalar screenOffset=screenNormal*Vrui::getInverseNavigationTransformation().transform(screenT.getOrigin());
+//	GLdouble cuttingPlane[4];
+//	for(int i=0;i<3;++i)
+//		cuttingPlane[i]=screenNormal[i];
+//	cuttingPlane[3]=-screenOffset;
+//	glEnable(GL_CLIP_PLANE0);
+//	glClipPlane(GL_CLIP_PLANE0,cuttingPlane);
+//	#endif
+//    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+//	/* Render all opaque surfaces: */
+//	glDisable(GL_CULL_FACE);
+//	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
+//	if(showSurface&&!surfaceTransparent)
+//		{
+//		/* Draw */
+//		drawCube();
+//		}
+//	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
+//	glEnable(GL_CULL_FACE);
+//
+//	/* Render transparent surfaces in back-to-front order: */
+//	glEnable(GL_BLEND);
+//	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+//	glDepthMask(GL_FALSE);
+//	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
+//
+//	/* Render back parts of surfaces: */
+//	glCullFace(GL_FRONT);
+//	if(showSurface&&surfaceTransparent)
+//		{
+//		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
+//		glMaterial(GLMaterialEnums::FRONT_AND_BACK,surfaceMaterial);
+//
+//		/* Draw */
+//		drawCube();
+//
+//		/* Reset OpenGL state: */
+//		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR);
+//		}
+//	if(showGrid)
+//		{
+//		glDisable(GL_LIGHTING);
+//		glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+//		glLineWidth(1.0f);
+//
+//		/* Draw */
+//		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+//		drawCube();
+//		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+//
+//
+//		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+//		glEnable(GL_LIGHTING);
+//		}
+//
+//	/* Render front parts of surfaces: */
+//	glCullFace(GL_BACK);
+//
+//	if(showSurface&&surfaceTransparent)
+//		{
+//		/* Draw */
+//		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
+//		glMaterial(GLMaterialEnums::FRONT_AND_BACK,surfaceMaterial);
+//
+//		/* Draw */
+//		drawCube();
+//
+//		/* Reset OpenGL state: */
+//		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR);		}
+//
+//	/* Disable blending: */
+//	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
+//	glDepthMask(GL_TRUE);
+//	glDisable(GL_BLEND);
+//
+//	/* Restore OpenGL state: */
+//	#if CLIP_SCREEN
+//	glDisable(GL_CLIP_PLANE0);
+//	#endif
+//        std::cout << this->renWin->GetSize()[0] << "," << this->renWin->GetSize()[1] << std::endl;
+        this->renWin->Render();
 	glPopAttrib();
 	}
 

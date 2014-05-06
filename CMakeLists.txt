@@ -25,6 +25,8 @@ INCLUDE(${VTK_USE_FILE})
 SET(HelloVrui_SRCS
   HelloVrui.cpp
   HelloVrui.h
+  vtkExtOpenGLRenderWindow.cxx
+  vtkExtOpenGLRenderWindow.h
   )
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${HelloVrui_SRCS})
