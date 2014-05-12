@@ -58,11 +58,13 @@
 #include <vtkActor.h>
 #include <vtkCamera.h>
 #include "vtkExtOpenGLRenderWindow.h"
+#include <vtkLightCollection.h>
+#include <vtkLight.h>
 #include <vtkNew.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderer.h>
-#include <vtkSphereSource.h>
-
+#include <vtkCubeSource.h>
+#include <vtkMatrix4x4.h>
 /*****************************************
 Methods of class HelloVrui::DataItem:
 *****************************************/
@@ -174,9 +176,16 @@ HelloVrui::HelloVrui(int& argc,char**& argv)
 	 showSurface(true),surfaceTransparent(false),
 	 surfaceMaterial(GLMaterial::Color(1.0f,1.0f,1.0f,0.333f),GLMaterial::Color(0.333f,0.333f,0.333f),10.0f),
 	 showGrid(true),
-	 mainMenu(0)
+	 mainMenu(0),
+         drawGLCube(false)
 	{
-
+        if(argc > 1)
+          {
+          if(std::string(argv[1]) == "--gl")
+            {
+            this->drawGLCube = true;
+            }
+          }
 	/* Create the user interface: */
 	mainMenu=createMainMenu();
 	Vrui::setMainMenu(mainMenu);
@@ -205,8 +214,14 @@ void HelloVrui::initContext(GLContextData& contextData) const
         vtkNew<vtkActor> actor;
         actor->SetMapper(mapper.GetPointer());
         this->ren->AddActor(actor.GetPointer());
-        vtkNew<vtkSphereSource> ss;
-//        ss->SetRadius(10000);
+        this->ren->RemoveAllLights();
+//        vtkNew<vtkLight> light;
+//        light->SetLightTypeToHeadlight();
+//        light->SetPosition(0,-100,0);
+//        this->ren->RemoveAllLights();
+//        this->ren->AddLight(light.GetPointer());
+        vtkNew<vtkCubeSource> ss;
+//        ss->SetRadius(0.5);
         mapper->SetInputConnection(ss->GetOutputPort());
 //        std::cout << this->renWin->GetSize()[0] << "," << this->renWin->GetSize()[1] << std::endl;
 	}
@@ -224,39 +239,47 @@ void HelloVrui::frame(void)
 
 void HelloVrui::display(GLContextData& contextData) const
 	{
-	#if 1
 	/* Print the modelview and projection matrices: */
 	GLdouble mv[16],p[16];
 	glGetDoublev(GL_MODELVIEW_MATRIX,mv);
 	glGetDoublev(GL_PROJECTION_MATRIX,p);
 
+#if 0 // Printing matrices
+        std::cout << "VRUI MV:" << std::endl;
 	for(int i=0;i<4;++i)
 		{
-		#if 1
 		for(int j=0;j<4;++j)
 			std::cout<<" "<<std::setw(12)<<mv[i+j*4];
-		#endif
-		#if 0
-		std::cout<<"        ";
+                std::cout << std::endl;
+                }
+                std::cout << std::endl << "VRUI P:" << std::endl;
+//		std::cout<<"        ";
+	for(int i=0;i<4;++i)
+          {
 		for(int j=0;j<4;++j)
 			std::cout<<" "<<std::setw(12)<<p[i+j*4];
-		#endif
 		std::cout<<std::endl;
 		}
 	std::cout<<std::endl;
-	#endif
-
+#endif
 	/* Get context data item: */
 //	DataItem* dataItem=contextData.retrieveDataItem<DataItem>(this);
 
 	/* Save OpenGL state: */
+	glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_LIGHTING_BIT|GL_POLYGON_BIT);
+        if(this->drawGLCube)
+          {
+          drawCube();
+          }
+        else
+          {
 //        glMatrixMode(GL_PROJECTION);
-//        glPushMatrix();
 //        glLoadIdentity();
+//        glPushMatrix();
 //        glMatrixMode(GL_MODELVIEW);
 //        glPushMatrix();
 //        glLoadIdentity();
-	glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_LIGHTING_BIT|GL_POLYGON_BIT);
+
 //
 //	#if CLIP_SCREEN
 //	/* Add a clipping plane in the screen plane: */
@@ -343,7 +366,12 @@ void HelloVrui::display(GLContextData& contextData) const
 //	glDisable(GL_CLIP_PLANE0);
 //	#endif
 //        std::cout << this->renWin->GetSize()[0] << "," << this->renWin->GetSize()[1] << std::endl;
-//        vtkCamera* camera = this->ren->GetActiveCamera();
+        vtkCamera* camera = this->ren->GetActiveCamera();
+        double p1[16], mv1[16];
+        this->transposeMatrix4x4(p,p1);
+        camera->SetProjectionTransformMatrix(p1);
+        this->transposeMatrix4x4(mv,mv1);
+        camera->SetViewTransformMatrix(mv1);
 //        camera->SetFocalPoint(0,0,0);
 //        camera->SetPosition(0,0,1.5);
 //        std::cout << "Setting position to " << mv[12] << "," << mv[13] << "," << mv[14] << std::endl;
@@ -351,13 +379,39 @@ void HelloVrui::display(GLContextData& contextData) const
 //        camera->SetViewUp(0,1,0);
 //        std::cout << "Setting viewup to " << mv[1] << "," << mv[5] << "," << mv[9] << std::endl;
 ////        camera->SetViewUp(mv[1],mv[5],mv[9]);
-//        camera->SetClippingRange(0.01,10000);
+//        camera->SetClippingRange(0.001,100);
         this->renWin->Render();
-	glPopAttrib();
+        vtkNew<vtkMatrix4x4> mat;
+        mat->DeepCopy(mv1);
+        mat->Invert();
+        vtkLightCollection* lC = this->ren->GetLights();
+        lC->InitTraversal();
+        vtkLight* light = lC->GetNextItem();
+        light->SetLightTypeToSceneLight();
+        light->SetColor(1.0,0.5,0.5);
+//        light->SetPosition(10000,0,10000);
+        light->SetTransformMatrix(mat.GetPointer());
+//        this->renWin->Render();
 //        glPopMatrix();
 //        glMatrixMode(GL_PROJECTION);
 //        glPopMatrix();
+
+          }
+	glPopAttrib();
 	}
+
+void HelloVrui::transposeMatrix4x4(double* inArr, double* outArr) const
+{
+  for(int i = 0 ; i < 4; ++i)
+    {
+    for (int j = 0; j < 4; ++j)
+      {
+      outArr[i*4+j] = inArr[j*4+i];
+      outArr[j*4+i] = inArr[i*4+j];
+      }
+    }
+}
+
 
 void HelloVrui::drawCube(void) const
     {

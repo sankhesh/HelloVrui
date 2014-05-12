@@ -70,6 +70,8 @@ class HelloVrui:public Vrui::Application,public GLObject
 
         vtkSmartPointer<vtkExtOpenGLRenderWindow> renWin;
         vtkSmartPointer<vtkRenderer> ren;
+        bool drawGLCube;
+        void transposeMatrix4x4(double*, double*) const;
 	};
 
 #endif
