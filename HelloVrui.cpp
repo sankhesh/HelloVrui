@@ -57,12 +57,13 @@
 // VTK includes
 #include <vtkActor.h>
 #include <vtkCamera.h>
-#include "vtkExtOpenGLRenderWindow.h"
+#include <vtkExternalOpenGLCamera.h>
+#include "vtkExternalOpenGLRenderWindow.h"
 #include <vtkLightCollection.h>
 #include <vtkLight.h>
 #include <vtkNew.h>
 #include <vtkPolyDataMapper.h>
-#include <vtkRenderer.h>
+#include <vtkExternalOpenGLRenderer.h>
 #include <vtkCubeSource.h>
 #include <vtkMatrix4x4.h>
 /*****************************************
@@ -193,8 +194,12 @@ HelloVrui::HelloVrui(int& argc,char**& argv)
 	/* Initialize Vrui navigation transformation: */
 	centerDisplayCallback(0);
 
-        this->renWin = vtkSmartPointer<vtkExtOpenGLRenderWindow>::New();
-        this->ren = vtkSmartPointer<vtkRenderer>::New();
+        this->renWin =
+          vtkSmartPointer<vtkExternalOpenGLRenderWindow>::New();
+        this->ren = vtkSmartPointer<vtkExternalOpenGLRenderer>::New();
+        this->cam = vtkSmartPointer<vtkExternalOpenGLCamera>::New();
+        this->ren->SetActiveCamera(this->cam);
+        this->ren->SetClearBuffers(1);
 	}
 
 HelloVrui::~HelloVrui(void)
@@ -366,12 +371,13 @@ void HelloVrui::display(GLContextData& contextData) const
 //	glDisable(GL_CLIP_PLANE0);
 //	#endif
 //        std::cout << this->renWin->GetSize()[0] << "," << this->renWin->GetSize()[1] << std::endl;
-        vtkCamera* camera = this->ren->GetActiveCamera();
+//        vtkExternalOpenGLCamera* camera =
+//          vtkExternalOpenGLCamera::SafeDownCast(this->ren->GetActiveCamera());
         double p1[16], mv1[16];
         this->transposeMatrix4x4(p,p1);
-        camera->SetProjectionTransformMatrix(p1);
+        this->cam->SetProjectionTransformMatrix(p1);
         this->transposeMatrix4x4(mv,mv1);
-        camera->SetViewTransformMatrix(mv1);
+        this->cam->SetViewTransformMatrix(mv1);
 //        camera->SetFocalPoint(0,0,0);
 //        camera->SetPosition(0,0,1.5);
 //        std::cout << "Setting position to " << mv[12] << "," << mv[13] << "," << mv[14] << std::endl;
@@ -380,7 +386,11 @@ void HelloVrui::display(GLContextData& contextData) const
 //        std::cout << "Setting viewup to " << mv[1] << "," << mv[5] << "," << mv[9] << std::endl;
 ////        camera->SetViewUp(mv[1],mv[5],mv[9]);
 //        camera->SetClippingRange(0.001,100);
-        this->renWin->Render();
+//        this->renWin->Render();
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
+        renWin->Render();
+        glDisable(GL_BLEND);
         vtkNew<vtkMatrix4x4> mat;
         mat->DeepCopy(mv1);
         mat->Invert();

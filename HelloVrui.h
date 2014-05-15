@@ -21,8 +21,9 @@ class PopupWindow;
 class TextField;
 }
 
-class vtkExtOpenGLRenderWindow;
-class vtkRenderer;
+class vtkExternalOpenGLCamera;
+class vtkExternalOpenGLRenderWindow;
+class vtkExternalOpenGLRenderer;
 
 class HelloVrui:public Vrui::Application,public GLObject
 	{
@@ -68,8 +69,9 @@ class HelloVrui:public Vrui::Application,public GLObject
 	void menuToggleSelectCallback(GLMotif::ToggleButton::ValueChangedCallbackData* cbData);
 	void centerDisplayCallback(Misc::CallbackData* cbData);
 
-        vtkSmartPointer<vtkExtOpenGLRenderWindow> renWin;
-        vtkSmartPointer<vtkRenderer> ren;
+        vtkSmartPointer<vtkExternalOpenGLCamera> cam;
+        vtkSmartPointer<vtkExternalOpenGLRenderWindow> renWin;
+        vtkSmartPointer<vtkExternalOpenGLRenderer> ren;
         bool drawGLCube;
         void transposeMatrix4x4(double*, double*) const;
 	};
