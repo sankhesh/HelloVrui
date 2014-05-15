@@ -66,6 +66,8 @@
 #include <vtkExternalOpenGLRenderer.h>
 #include <vtkCubeSource.h>
 #include <vtkMatrix4x4.h>
+#include <vtkSphereSource.h>
+#include <vtkProperty.h>
 /*****************************************
 Methods of class HelloVrui::DataItem:
 *****************************************/
@@ -216,9 +218,13 @@ void HelloVrui::initContext(GLContextData& contextData) const
 
         this->renWin->AddRenderer(this->ren.GetPointer());
         vtkNew<vtkPolyDataMapper> mapper;
+        vtkNew<vtkPolyDataMapper> mapper1;
         vtkNew<vtkActor> actor;
+        vtkNew<vtkActor> actor1;
         actor->SetMapper(mapper.GetPointer());
+        actor1->SetMapper(mapper1.GetPointer());
         this->ren->AddActor(actor.GetPointer());
+        this->ren->AddActor(actor1.GetPointer());
         this->ren->RemoveAllLights();
 //        vtkNew<vtkLight> light;
 //        light->SetLightTypeToHeadlight();
@@ -226,8 +232,11 @@ void HelloVrui::initContext(GLContextData& contextData) const
 //        this->ren->RemoveAllLights();
 //        this->ren->AddLight(light.GetPointer());
         vtkNew<vtkCubeSource> ss;
-//        ss->SetRadius(0.5);
+        vtkNew<vtkSphereSource> ss1;
+        ss1->SetRadius(1.5);
+        ss1->SetCenter(2,0,1);
         mapper->SetInputConnection(ss->GetOutputPort());
+        mapper1->SetInputConnection(ss1->GetOutputPort());
 //        std::cout << this->renWin->GetSize()[0] << "," << this->renWin->GetSize()[1] << std::endl;
 	}
 
@@ -398,7 +407,7 @@ void HelloVrui::display(GLContextData& contextData) const
         lC->InitTraversal();
         vtkLight* light = lC->GetNextItem();
         light->SetLightTypeToSceneLight();
-        light->SetColor(1.0,0.5,0.5);
+//        light->SetColor(1.0,0.5,0.5);
 //        light->SetPosition(10000,0,10000);
         light->SetTransformMatrix(mat.GetPointer());
 //        this->renWin->Render();
