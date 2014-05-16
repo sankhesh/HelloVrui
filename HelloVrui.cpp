@@ -57,17 +57,17 @@
 // VTK includes
 #include <vtkActor.h>
 #include <vtkCamera.h>
+#include <vtkCubeSource.h>
 #include <vtkExternalOpenGLCamera.h>
+#include <vtkExternalOpenGLRenderer.h>
 #include "vtkExternalOpenGLRenderWindow.h"
 #include <vtkLightCollection.h>
 #include <vtkLight.h>
+#include <vtkMatrix4x4.h>
 #include <vtkNew.h>
 #include <vtkPolyDataMapper.h>
-#include <vtkExternalOpenGLRenderer.h>
-#include <vtkCubeSource.h>
-#include <vtkMatrix4x4.h>
-#include <vtkSphereSource.h>
 #include <vtkProperty.h>
+#include <vtkSphereSource.h>
 /*****************************************
 Methods of class HelloVrui::DataItem:
 *****************************************/
@@ -226,11 +226,6 @@ void HelloVrui::initContext(GLContextData& contextData) const
         this->ren->AddActor(actor.GetPointer());
         this->ren->AddActor(actor1.GetPointer());
         this->ren->RemoveAllLights();
-//        vtkNew<vtkLight> light;
-//        light->SetLightTypeToHeadlight();
-//        light->SetPosition(0,-100,0);
-//        this->ren->RemoveAllLights();
-//        this->ren->AddLight(light.GetPointer());
         vtkNew<vtkCubeSource> ss;
         vtkNew<vtkSphereSource> ss1;
         ss1->SetRadius(1.5);
@@ -276,8 +271,6 @@ void HelloVrui::display(GLContextData& contextData) const
 		}
 	std::cout<<std::endl;
 #endif
-	/* Get context data item: */
-//	DataItem* dataItem=contextData.retrieveDataItem<DataItem>(this);
 
 	/* Save OpenGL state: */
 	glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_LIGHTING_BIT|GL_POLYGON_BIT);
@@ -294,91 +287,6 @@ void HelloVrui::display(GLContextData& contextData) const
 //        glPushMatrix();
 //        glLoadIdentity();
 
-//
-//	#if CLIP_SCREEN
-//	/* Add a clipping plane in the screen plane: */
-//	Vrui::VRScreen* screen=Vrui::getMainScreen();
-//	Vrui::ONTransform screenT=screen->getScreenTransformation();
-//	Vrui::Vector screenNormal=Vrui::getInverseNavigationTransformation().transform(screenT.getDirection(2));
-//	Vrui::Scalar screenOffset=screenNormal*Vrui::getInverseNavigationTransformation().transform(screenT.getOrigin());
-//	GLdouble cuttingPlane[4];
-//	for(int i=0;i<3;++i)
-//		cuttingPlane[i]=screenNormal[i];
-//	cuttingPlane[3]=-screenOffset;
-//	glEnable(GL_CLIP_PLANE0);
-//	glClipPlane(GL_CLIP_PLANE0,cuttingPlane);
-//	#endif
-//    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-//	/* Render all opaque surfaces: */
-//	glDisable(GL_CULL_FACE);
-//	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
-//	if(showSurface&&!surfaceTransparent)
-//		{
-//		/* Draw */
-//		drawCube();
-//		}
-//	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
-//	glEnable(GL_CULL_FACE);
-//
-//	/* Render transparent surfaces in back-to-front order: */
-//	glEnable(GL_BLEND);
-//	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-//	glDepthMask(GL_FALSE);
-//	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
-//
-//	/* Render back parts of surfaces: */
-//	glCullFace(GL_FRONT);
-//	if(showSurface&&surfaceTransparent)
-//		{
-//		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
-//		glMaterial(GLMaterialEnums::FRONT_AND_BACK,surfaceMaterial);
-//
-//		/* Draw */
-//		drawCube();
-//
-//		/* Reset OpenGL state: */
-//		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR);
-//		}
-//	if(showGrid)
-//		{
-//		glDisable(GL_LIGHTING);
-//		glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-//		glLineWidth(1.0f);
-//
-//		/* Draw */
-//		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//		drawCube();
-//		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-//
-//
-//		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-//		glEnable(GL_LIGHTING);
-//		}
-//
-//	/* Render front parts of surfaces: */
-//	glCullFace(GL_BACK);
-//
-//	if(showSurface&&surfaceTransparent)
-//		{
-//		/* Draw */
-//		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
-//		glMaterial(GLMaterialEnums::FRONT_AND_BACK,surfaceMaterial);
-//
-//		/* Draw */
-//		drawCube();
-//
-//		/* Reset OpenGL state: */
-//		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR);		}
-//
-//	/* Disable blending: */
-//	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
-//	glDepthMask(GL_TRUE);
-//	glDisable(GL_BLEND);
-//
-//	/* Restore OpenGL state: */
-//	#if CLIP_SCREEN
-//	glDisable(GL_CLIP_PLANE0);
-//	#endif
 //        std::cout << this->renWin->GetSize()[0] << "," << this->renWin->GetSize()[1] << std::endl;
 //        vtkExternalOpenGLCamera* camera =
 //          vtkExternalOpenGLCamera::SafeDownCast(this->ren->GetActiveCamera());
