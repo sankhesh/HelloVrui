@@ -225,6 +225,7 @@ void HelloVrui::initContext(GLContextData& contextData) const
         actor1->SetMapper(mapper1.GetPointer());
         this->ren->AddActor(actor.GetPointer());
         this->ren->AddActor(actor1.GetPointer());
+        this->ren->AutomaticLightCreationOff();
         this->ren->RemoveAllLights();
         vtkNew<vtkCubeSource> ss;
         vtkNew<vtkSphereSource> ss1;
@@ -306,22 +307,25 @@ void HelloVrui::display(GLContextData& contextData) const
 //        this->renWin->Render();
         glEnable(GL_BLEND);
         glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
+        glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHT0);
+        glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 15.f);
         renWin->Render();
         glDisable(GL_BLEND);
-        vtkNew<vtkMatrix4x4> mat;
-        mat->DeepCopy(mv1);
-        mat->Invert();
-        vtkLightCollection* lC = this->ren->GetLights();
-        lC->InitTraversal();
-        vtkLight* light = lC->GetNextItem();
-        light->SetLightTypeToSceneLight();
-//        light->SetColor(1.0,0.5,0.5);
-//        light->SetPosition(10000,0,10000);
-        light->SetTransformMatrix(mat.GetPointer());
-//        this->renWin->Render();
-//        glPopMatrix();
-//        glMatrixMode(GL_PROJECTION);
-//        glPopMatrix();
+//        vtkNew<vtkMatrix4x4> mat;
+//        mat->DeepCopy(mv1);
+//        mat->Invert();
+//        vtkLightCollection* lC = this->ren->GetLights();
+//        lC->InitTraversal();
+//        vtkLight* light = lC->GetNextItem();
+//        light->SetLightTypeToSceneLight();
+////        light->SetColor(1.0,0.5,0.5);
+////        light->SetPosition(10000,0,10000);
+//        light->SetTransformMatrix(mat.GetPointer());
+////        this->renWin->Render();
+////        glPopMatrix();
+////        glMatrixMode(GL_PROJECTION);
+////        glPopMatrix();
 
           }
 	glPopAttrib();
