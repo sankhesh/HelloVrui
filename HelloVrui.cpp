@@ -201,7 +201,6 @@ HelloVrui::HelloVrui(int& argc,char**& argv)
         this->ren = vtkSmartPointer<vtkExternalOpenGLRenderer>::New();
         this->cam = vtkSmartPointer<vtkExternalOpenGLCamera>::New();
         this->ren->SetActiveCamera(this->cam);
-        this->ren->SetClearBuffers(1);
 	}
 
 HelloVrui::~HelloVrui(void)
@@ -225,7 +224,9 @@ void HelloVrui::initContext(GLContextData& contextData) const
         actor1->SetMapper(mapper1.GetPointer());
         this->ren->AddActor(actor.GetPointer());
         this->ren->AddActor(actor1.GetPointer());
-        this->ren->AutomaticLightCreationOff();
+//        this->ren->AutomaticLightCreationOff();
+        this->ren->PreserveColorBufferOn();
+        this->ren->PreserveDepthBufferOn();
         this->ren->RemoveAllLights();
         vtkNew<vtkCubeSource> ss;
         vtkNew<vtkSphereSource> ss1;
@@ -245,16 +246,40 @@ void HelloVrui::frame(void)
 	{
         this->renWin->SetSize(const_cast<int*>(Vrui::getWindow(0)->getViewportSize()));
 //        std::cout << Vrui::getWindow(0)->getViewportSize()[0] << " " << Vrui::getWindow(0)->getViewportSize()[1] << std::endl;
+#if 0 // Printing matrices
+        GLdouble mv[16],p[16];
+        glGetDoublev(GL_MODELVIEW_MATRIX,mv);
+        glGetDoublev(GL_PROJECTION_MATRIX,p);
+
+        std::cout << "Frame matrices " << std::endl;
+        std::cout << "VRUI MV:" << std::endl;
+	for(int i=0;i<4;++i)
+		{
+		for(int j=0;j<4;++j)
+			std::cout<<" "<<std::setw(12)<<mv[i+j*4];
+                std::cout << std::endl;
+                }
+                std::cout << std::endl << "VRUI P:" << std::endl;
+//		std::cout<<"        ";
+	for(int i=0;i<4;++i)
+          {
+		for(int j=0;j<4;++j)
+			std::cout<<" "<<std::setw(12)<<p[i+j*4];
+		std::cout<<std::endl;
+		}
+	std::cout<<std::endl;
+#endif
 	}
 
 void HelloVrui::display(GLContextData& contextData) const
 	{
 	/* Print the modelview and projection matrices: */
-	GLdouble mv[16],p[16];
-	glGetDoublev(GL_MODELVIEW_MATRIX,mv);
-	glGetDoublev(GL_PROJECTION_MATRIX,p);
+        GLdouble mv[16],p[16];
+        glGetDoublev(GL_MODELVIEW_MATRIX,mv);
+        glGetDoublev(GL_PROJECTION_MATRIX,p);
 
 #if 0 // Printing matrices
+        std::cout << "Display matrices " << std::endl;
         std::cout << "VRUI MV:" << std::endl;
 	for(int i=0;i<4;++i)
 		{
@@ -305,23 +330,20 @@ void HelloVrui::display(GLContextData& contextData) const
 ////        camera->SetViewUp(mv[1],mv[5],mv[9]);
 //        camera->SetClippingRange(0.001,100);
 //        this->renWin->Render();
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
-        glEnable(GL_LIGHTING);
-        glEnable(GL_LIGHT0);
-        glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 15.f);
+//        glEnable(GL_BLEND);
+//        glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
         renWin->Render();
-        glDisable(GL_BLEND);
-//        vtkNew<vtkMatrix4x4> mat;
-//        mat->DeepCopy(mv1);
-//        mat->Invert();
-//        vtkLightCollection* lC = this->ren->GetLights();
-//        lC->InitTraversal();
-//        vtkLight* light = lC->GetNextItem();
-//        light->SetLightTypeToSceneLight();
-////        light->SetColor(1.0,0.5,0.5);
-////        light->SetPosition(10000,0,10000);
-//        light->SetTransformMatrix(mat.GetPointer());
+//        glDisable(GL_BLEND);
+        vtkNew<vtkMatrix4x4> mat;
+        mat->DeepCopy(mv1);
+        mat->Invert();
+        vtkLightCollection* lC = this->ren->GetLights();
+        lC->InitTraversal();
+        vtkLight* light = lC->GetNextItem();
+        light->SetLightTypeToSceneLight();
+//        light->SetColor(1.0,0.5,0.5);
+//        light->SetPosition(10000,0,10000);
+        light->SetTransformMatrix(mat.GetPointer());
 ////        this->renWin->Render();
 ////        glPopMatrix();
 ////        glMatrixMode(GL_PROJECTION);
