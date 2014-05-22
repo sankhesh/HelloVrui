@@ -224,17 +224,18 @@ void HelloVrui::initContext(GLContextData& contextData) const
         actor1->SetMapper(mapper1.GetPointer());
         this->ren->AddActor(actor.GetPointer());
         this->ren->AddActor(actor1.GetPointer());
-//        this->ren->AutomaticLightCreationOff();
+        this->ren->AutomaticLightCreationOff();
         this->ren->PreserveColorBufferOn();
         this->ren->PreserveDepthBufferOn();
         this->ren->RemoveAllLights();
+        vtkNew<vtkLight> light;
+        this->ren->AddLight(light.GetPointer());
         vtkNew<vtkCubeSource> ss;
         vtkNew<vtkSphereSource> ss1;
         ss1->SetRadius(1.5);
         ss1->SetCenter(2,0,1);
         mapper->SetInputConnection(ss->GetOutputPort());
         mapper1->SetInputConnection(ss1->GetOutputPort());
-//        std::cout << this->renWin->GetSize()[0] << "," << this->renWin->GetSize()[1] << std::endl;
 	}
 
 void HelloVrui::toolCreationCallback(Vrui::ToolManager::ToolCreationCallbackData* cbData)
@@ -245,7 +246,6 @@ void HelloVrui::toolCreationCallback(Vrui::ToolManager::ToolCreationCallbackData
 void HelloVrui::frame(void)
 	{
         this->renWin->SetSize(const_cast<int*>(Vrui::getWindow(0)->getViewportSize()));
-//        std::cout << Vrui::getWindow(0)->getViewportSize()[0] << " " << Vrui::getWindow(0)->getViewportSize()[1] << std::endl;
 #if 0 // Printing matrices
         GLdouble mv[16],p[16];
         glGetDoublev(GL_MODELVIEW_MATRIX,mv);
@@ -306,34 +306,28 @@ void HelloVrui::display(GLContextData& contextData) const
           }
         else
           {
-//        glMatrixMode(GL_PROJECTION);
-//        glLoadIdentity();
-//        glPushMatrix();
-//        glMatrixMode(GL_MODELVIEW);
-//        glPushMatrix();
-//        glLoadIdentity();
 
-//        std::cout << this->renWin->GetSize()[0] << "," << this->renWin->GetSize()[1] << std::endl;
-//        vtkExternalOpenGLCamera* camera =
-//          vtkExternalOpenGLCamera::SafeDownCast(this->ren->GetActiveCamera());
+        /* Directly set the projection and model view matrices for the camera
+         * This syncs up the VRUI and VTK camera
+         * NOTE: Since, VTK takes a transpose of the matrices internally, the
+         * before rendering, the matrices are transposed here first and then set
+         * on the camera to nullify the transpose.
+         */
         double p1[16], mv1[16];
         this->transposeMatrix4x4(p,p1);
         this->cam->SetProjectionTransformMatrix(p1);
         this->transposeMatrix4x4(mv,mv1);
         this->cam->SetViewTransformMatrix(mv1);
-//        camera->SetFocalPoint(0,0,0);
-//        camera->SetPosition(0,0,1.5);
-//        std::cout << "Setting position to " << mv[12] << "," << mv[13] << "," << mv[14] << std::endl;
-////        camera->SetPosition(0,0,-(mv[14]));
-//        camera->SetViewUp(0,1,0);
-//        std::cout << "Setting viewup to " << mv[1] << "," << mv[5] << "," << mv[9] << std::endl;
-////        camera->SetViewUp(mv[1],mv[5],mv[9]);
-//        camera->SetClippingRange(0.001,100);
-//        this->renWin->Render();
-//        glEnable(GL_BLEND);
-//        glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
+
+        /* Render the scene */
         renWin->Render();
-//        glDisable(GL_BLEND);
+
+        /* It is observed that in the VRUI coordinate space, VTK's +Z axis
+         * becomes the -Y axis. This causes, the light to always be at an
+         * inverse position to the camera. To counter-act this association, the
+         * light's transform matrix is set to an inverse of the camera's model
+         * view matrix.
+         */
         vtkNew<vtkMatrix4x4> mat;
         mat->DeepCopy(mv1);
         mat->Invert();
@@ -341,13 +335,7 @@ void HelloVrui::display(GLContextData& contextData) const
         lC->InitTraversal();
         vtkLight* light = lC->GetNextItem();
         light->SetLightTypeToSceneLight();
-//        light->SetColor(1.0,0.5,0.5);
-//        light->SetPosition(10000,0,10000);
         light->SetTransformMatrix(mat.GetPointer());
-////        this->renWin->Render();
-////        glPopMatrix();
-////        glMatrixMode(GL_PROJECTION);
-////        glPopMatrix();
 
           }
 	glPopAttrib();
@@ -428,6 +416,9 @@ void HelloVrui::centerDisplayCallback(Misc::CallbackData* cbData)
  *
  * parameter argc - int
  * parameter argv - char**
+ *
+ * Calling the application with --gl as the argument draws the GL cube and there
+ * is no VTK.
  */
 int main(int argc, char* argv[]) {
     try {
