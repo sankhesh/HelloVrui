@@ -68,6 +68,7 @@
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
 #include <vtkSphereSource.h>
+#include <vtkLightActor.h>
 /*****************************************
 Methods of class HelloVrui::DataItem:
 *****************************************/
@@ -199,8 +200,8 @@ HelloVrui::HelloVrui(int& argc,char**& argv)
         this->renWin =
           vtkSmartPointer<vtkExternalOpenGLRenderWindow>::New();
         this->ren = vtkSmartPointer<vtkExternalOpenGLRenderer>::New();
-        this->cam = vtkSmartPointer<vtkExternalOpenGLCamera>::New();
-        this->ren->SetActiveCamera(this->cam);
+//        this->cam = vtkSmartPointer<vtkExternalOpenGLCamera>::New();
+//        this->ren->SetActiveCamera(this->cam);
 	}
 
 HelloVrui::~HelloVrui(void)
@@ -229,7 +230,12 @@ void HelloVrui::initContext(GLContextData& contextData) const
         this->ren->PreserveDepthBufferOn();
         this->ren->RemoveAllLights();
         vtkNew<vtkLight> light;
+        light->SetLightTypeToSceneLight();
+//        light->SetPositional(true);
+//        vtkNew<vtkLightActor> lightActor;
+//        lightActor->SetLight(light.GetPointer());
         this->ren->AddLight(light.GetPointer());
+//        this->ren->AddViewProp(lightActor.GetPointer());
         vtkNew<vtkCubeSource> ss;
         vtkNew<vtkSphereSource> ss1;
         ss1->SetRadius(1.5);
@@ -274,9 +280,9 @@ void HelloVrui::frame(void)
 void HelloVrui::display(GLContextData& contextData) const
 	{
 	/* Print the modelview and projection matrices: */
-        GLdouble mv[16],p[16];
-        glGetDoublev(GL_MODELVIEW_MATRIX,mv);
-        glGetDoublev(GL_PROJECTION_MATRIX,p);
+//        GLdouble mv[16],p[16];
+//        glGetDoublev(GL_MODELVIEW_MATRIX,mv);
+//        glGetDoublev(GL_PROJECTION_MATRIX,p);
 
 #if 0 // Printing matrices
         std::cout << "Display matrices " << std::endl;
@@ -309,15 +315,15 @@ void HelloVrui::display(GLContextData& contextData) const
 
         /* Directly set the projection and model view matrices for the camera
          * This syncs up the VRUI and VTK camera
-         * NOTE: Since, VTK takes a transpose of the matrices internally, the
+         * NOTE: Since, VTK takes a transpose of the matrices internally
          * before rendering, the matrices are transposed here first and then set
          * on the camera to nullify the transpose.
          */
-        double p1[16], mv1[16];
-        this->transposeMatrix4x4(p,p1);
-        this->cam->SetProjectionTransformMatrix(p1);
-        this->transposeMatrix4x4(mv,mv1);
-        this->cam->SetViewTransformMatrix(mv1);
+//        double p1[16], mv1[16];
+//        this->transposeMatrix4x4(p,p1);
+//        this->cam->SetProjectionTransformMatrix(p);
+//        this->transposeMatrix4x4(mv,mv1);
+//        this->cam->SetViewTransformMatrix(mv);
 
         /* Render the scene */
         renWin->Render();
@@ -328,14 +334,17 @@ void HelloVrui::display(GLContextData& contextData) const
          * light's transform matrix is set to an inverse of the camera's model
          * view matrix.
          */
-        vtkNew<vtkMatrix4x4> mat;
-        mat->DeepCopy(mv1);
-        mat->Invert();
-        vtkLightCollection* lC = this->ren->GetLights();
-        lC->InitTraversal();
-        vtkLight* light = lC->GetNextItem();
-        light->SetLightTypeToSceneLight();
-        light->SetTransformMatrix(mat.GetPointer());
+//        vtkMatrix4x4* mat = 0;
+//        mat->DeepCopy(this->cam->GetModelViewTransformMatrix());
+//        if(!mat)
+//          {
+//          std::cout << "mat is null" << std::endl;
+//          }
+//        mat->Invert();
+//        vtkLightCollection* lC = this->ren->GetLights();
+//        lC->InitTraversal();
+//        vtkLight* light = lC->GetNextItem();
+//        light->SetTransformMatrix(mat);
 
           }
 	glPopAttrib();
