@@ -251,7 +251,8 @@ void HelloVrui::toolCreationCallback(Vrui::ToolManager::ToolCreationCallbackData
 
 void HelloVrui::frame(void)
 	{
-        this->renWin->SetSize(const_cast<int*>(Vrui::getWindow(0)->getViewportSize()));
+//        this->renWin->SetSize(const_cast<int*>(Vrui::getWindow(0)->getViewportSize()));
+//        std::cout << (const_cast<int*>(Vrui::getWindow(0)->getViewportSize()))[0] << " " << (const_cast<int*>(Vrui::getWindow(0)->getViewportSize()))[1] <<std::endl;
 #if 0 // Printing matrices
         GLdouble mv[16],p[16];
         glGetDoublev(GL_MODELVIEW_MATRIX,mv);
